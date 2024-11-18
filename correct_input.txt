@@ -1,0 +1,30 @@
+﻿program
+   var SMALLER as int ;
+   var BIGGER as int ;
+   var TEMP as int ;
+   var BOOLEAN as bool ;
+   var HELLO as int ;
+begin
+
+   HELLO := 23 div (42 mod 2) ;
+   BIGGER := readInt ;
+   SMALLER := readInt ;
+   TEMP := 32 ;
+   if SMALLER > BIGGER then
+      TEMP := SMALLER ;
+      TEMP1 := 2147483648 ;
+      SMALLER := BIGGER ;
+      BIGGER := TEMP ;
+   end ;
+
+   while SMALLER > 0 do
+      BIGGER := BIGGER - SMALLER ;
+
+      if SMALLER > BIGGER then
+         TEMP := SMALLER ;
+         SMALLER := BIGGER ;
+         BIGGER := TEMP ;
+      end ;
+   end ;
+   writeInt BIGGER ;
+end
