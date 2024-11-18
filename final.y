@@ -4,11 +4,12 @@
   #include "final_includes.h"
   #include <string.h>
   int yylex(void);
-  int yyerror(char*);
+  void yyerror(const char*);
 
 %}
 
 %define api.value.type {union YYSTYPE}
+%define parse.error detailed
 %start prog
 %token LP RP ASSIGN SC READINT WRITEINT
 %token <c_string> IDENTIFIER OP2 OP3 OP4 NUMBER BOOL
@@ -244,7 +245,7 @@ if(res == 0){ //parsing successful since else YYABORT is called, reached EOF
 return(res);
 }
 
-int yyerror(char* s){
+void yyerror(const char* s){
   fprintf(stderr, "%s\n", s);
 }
 
