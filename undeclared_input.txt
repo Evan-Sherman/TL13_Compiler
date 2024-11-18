@@ -11,6 +11,7 @@ begin
    TEMP := 32 ;
    if SMALLER > BIGGER then
       TEMP := SMALLER ;
+      TEMP1 := 2147483648 ;
       SMALLER := BIGGER ;
       BIGGER := TEMP ;
    end ;

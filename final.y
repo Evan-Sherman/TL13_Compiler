@@ -38,7 +38,6 @@ prog:{
     struct Program* prog = malloc(sizeof(struct Program));
     prog->decs = $2;
     prog->state_seq = $4;
-    display_prog(prog);
     to_c_file(prog);
     $$ = prog;
     }
@@ -170,6 +169,9 @@ expression: simpleExpression{
           struct Expression* exp = malloc(sizeof(struct Expression));
           exp->simple_expression1 = $1;
           exp->op = $2;
+          if(strcmp(exp->op, "=") == 0){
+            exp->op = "==";
+          }
           exp->simple_expression2 = $3;
           $$ = exp;
           }
@@ -238,7 +240,9 @@ factor: IDENTIFIER{
 
 
 int main(){
+signal(SIGTERM, sigterm_handler);
 int res = yyparse();
+
 if(res == 0){ //parsing successful since else YYABORT is called, reached EOF
   printf("Parsing Successful\n");
 }
@@ -246,7 +250,7 @@ return(res);
 }
 
 void yyerror(const char* s){
-  fprintf(stderr, "%s\n", s);
+  fprintf(stderr, RED "%s\n" RESET, s);
 }
 
 int yywrap() {

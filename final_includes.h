@@ -1,6 +1,11 @@
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#define RED "\033[31m"
+#define RESET "\033[0m"
+#define GREEN "\033[32m"
 
 struct Program {
   struct Declaration *decs;
@@ -100,21 +105,15 @@ struct Factor {
   struct Expression *exp;
 };
 
-void display_prog(struct Program *prog);
-void display_dec(struct Declaration *dec);
-void display_type(struct Type *type);
-void display_statement_seq(struct StatementSequence *state_seq);
-void display_statement(struct Statement *statement);
-void display_assignment(struct Assignment *assign);
-void display_writeint(struct WriteInt *writeint);
-void display_if_statement(struct IfStatement *if_state);
-void display_else_clause(struct ElseClause *else_clause);
-void display_while_statement(struct WhileStatement *while_state);
-void display_expression(struct Expression *exp);
-void display_simple_expression(struct SimpleExpression *simp_exp);
-void display_term(struct Term *term);
-void display_factor(struct Factor *fac);
-
+bool is_in_dec(const char *);
+bool is_dec_int(const char *);
+void add_dec(const char *);
+void validate_ident(const char *);
+void validate_type_of_ident(const char *, bool);
+void check_duplicate_dec(const char *);
+void sigterm_handler(
+    int sig); // SIGTERM signal will be sent when a semntic error is detected.
+void terminate();
 void to_c_file(struct Program *);
 const char *c_style_dec(struct Declaration *);
 const char *c_style_statement_seq(struct StatementSequence *);

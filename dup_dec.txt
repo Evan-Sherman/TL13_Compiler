@@ -4,6 +4,7 @@
    var TEMP as int ;
    var BOOLEAN as bool ;
    var HELLO as int ;
+   var TEMP as bool ;
 begin
 
    BIGGER := readInt ;
