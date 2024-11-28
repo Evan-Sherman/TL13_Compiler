@@ -5,6 +5,8 @@
   char* token;
 %}
 
+%option yylineno
+
 %%
 [1-9][0-9]*|0 {
 yylval.c_string = strdup(yytext);
