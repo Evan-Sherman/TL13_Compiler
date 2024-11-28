@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// these are parallel arrays
-// should always be same length and coordinated
 int dec_len = 0;
 struct Declaration **dec_arr;
 
