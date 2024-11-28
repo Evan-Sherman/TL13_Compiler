@@ -19,6 +19,7 @@ struct Declaration {
   struct Type *type;
   //;
   struct Declaration *next_dec;
+  int line_num;
 };
 
 struct Type {
@@ -105,16 +106,20 @@ struct Factor {
   struct Expression *exp;
 };
 
-bool is_in_dec(const char *);
+int get_dec_index(const char *);
 bool is_dec_int(const char *);
-void add_dec(const char *);
+void add_dec(struct Declaration *dec);
 void validate_ident(const char *);
 void validate_type_of_ident(const char *, bool);
 void check_duplicate_dec(const char *);
-void sigterm_handler(
-    int sig); // SIGTERM signal will be sent when a semntic error is detected.
 void terminate();
+
 void to_c_file(struct Program *);
+bool is_exp_int(struct Expression *);
+bool is_simp_exp_int(struct SimpleExpression *);
+bool is_term_int(struct Term *);
+bool is_fac_int(struct Factor *);
+
 const char *c_style_dec(struct Declaration *);
 const char *c_style_statement_seq(struct StatementSequence *);
 const char *c_style_statement(struct Statement *);

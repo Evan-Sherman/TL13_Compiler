@@ -4,48 +4,50 @@
 
 // these are parallel arrays
 // should always be same length and coordinated
-const char **dec_arr;
-bool *is_int_arr;
-int dec_len;
-int is_int_len;
-const char *error_msg = NULL;
+int dec_len = 0;
+struct Declaration **dec_arr;
 
-void add_dec(const char *str) {
-  const char **new_arr = malloc(sizeof(char *) * (dec_len + 1));
+/**
+ * Symbol table handling
+ * **/
+void add_dec(struct Declaration *dec) {
+  struct Declaration **new_arr =
+      malloc(sizeof(struct Declaration *) * (dec_len + 1));
   for (int i = 0; i < dec_len; i++) {
     new_arr[i] = dec_arr[i];
   }
-  new_arr[dec_len] = str;
+  new_arr[dec_len] = dec;
   dec_len++;
   dec_arr = new_arr;
 }
 
-bool is_in_dec(const char *str) {
+int get_dec_index(const char *str) {
   for (int i = 0; i < dec_len; i++) {
-    if (strcmp(str, dec_arr[i]) == 0) {
-      return true;
+    if (strcmp(str, dec_arr[i]->identifier) == 0) {
+      return i;
     }
   }
-  return false;
+  return -1;
 }
 
 bool is_dec_int(const char *str) {
   for (int i = 0; i < dec_len; i++) {
-    if (strcmp(str, dec_arr[i]) == 0) {
-      return is_int_arr[i];
+    if (strcmp(str, dec_arr[i]->identifier) == 0) {
+      return dec_arr[i]->type->is_int;
     }
   }
-  // should not reach, caller should validate
+  // should not reach, caller should validate dec is present
   return false;
 }
 
+/**
+ * Symbol Table validation
+ */
+
 void validate_ident(const char *ident) {
-  if (!is_in_dec(ident)) {
-    int buf_size = strlen("Undeclared identifier '' encountered\n") + 1 +
-                   strlen(ident) + 1 + 7;
-    error_msg = malloc(buf_size);
-    snprintf((char *)error_msg, buf_size,
-             RED "Undeclared identifier '%s' encountered" RESET, ident);
+  int i = get_dec_index(ident);
+  if (i == -1) {
+    printf(RED "Undeclared identifier '%s' encountered\n" RESET, ident);
     terminate();
   } else {
     return;
@@ -55,12 +57,8 @@ void validate_ident(const char *ident) {
 void validate_type_of_ident(const char *ident, bool is_int) {
   if (is_dec_int(ident) != is_int) {
     const char *type_str = !is_int ? "int" : "boolean";
-    int buf_size = strlen("Mismatched types. '' was declared as a \n") + 1 +
-                   strlen(ident) + 1 + strlen(type_str) + 1 + 6;
-    error_msg = malloc(buf_size);
-    snprintf((char *)error_msg, buf_size,
-             RED "Mismatched types. '%s' was declared as a %s\n" RESET, ident,
-             type_str);
+    printf(RED "Mismatched types. '%s' was declared as a %s\n" RESET, ident,
+           type_str);
     terminate();
   } else {
     return;
@@ -68,46 +66,98 @@ void validate_type_of_ident(const char *ident, bool is_int) {
 }
 
 void check_duplicate_dec(const char *str) {
-  if (is_in_dec(str)) {
-    int buf_size = strlen("Duplicate Declaration. '' is already declared\n") +
-                   1 + strlen(str) + 1 + 6;
-    error_msg = malloc(buf_size);
-    snprintf((char *)error_msg, buf_size,
-             RED "Duplicate declaration. '%s' is already declared\n", str);
+  int i = get_dec_index(str);
+  if (i != -1) {
+    printf(RED "Duplicate declaration. '%s' is already declared on line %d\n",
+           str, dec_arr[i]->line_num);
     terminate();
   }
 }
 
-void sigterm_handler(int sig) {
-  if (error_msg == NULL) {
-    printf("\nKill called. exiting...\n");
-    exit(0);
-  } else {
-    printf("\n%s\n", error_msg);
-    exit(0);
+/**
+ * Type checking of expressions
+ */
+
+bool is_exp_int(struct Expression *exp) {
+  if (exp->simple_expression2 != NULL) {
+    if (!is_simp_exp_int(exp->simple_expression1)) {
+      printf(RED "Type Error, %s is not of 'int' type\n" RESET,
+             c_style_simple_expression(exp->simple_expression1));
+      terminate();
+    }
+    if (!is_simp_exp_int(exp->simple_expression2)) {
+      printf(RED "Type Error, %s is not of 'int' type\n" RESET,
+             c_style_simple_expression(exp->simple_expression2));
+      terminate();
+    }
+    return false; // could use some extra checking
   }
+  return is_simp_exp_int(exp->simple_expression1);
+}
+
+bool is_simp_exp_int(struct SimpleExpression *exp) {
+  if (exp->term2 != NULL) {
+    if (!is_term_int(exp->term1)) {
+      printf(RED "Type error. %s is not of 'int' type\n" RESET,
+             c_style_term(exp->term1));
+      terminate();
+    }
+    if (!is_term_int(exp->term2)) {
+      printf(RED "Type error. %s is not of 'int' type\n" RESET,
+             c_style_term(exp->term2));
+      terminate();
+    }
+    return true; // could use validating on both sides of operand
+  }
+  return is_term_int(exp->term1);
+}
+
+bool is_term_int(struct Term *term) {
+  if (term->factor2 != NULL) {
+    if (!is_fac_int(term->factor1)) {
+      printf(RED "Type error. %s is not of 'int' type\n" RESET,
+             c_style_factor(term->factor1));
+      terminate();
+    }
+    if (!is_fac_int(term->factor2)) {
+      printf(RED "Type error. %s is not of 'int' type\n" RESET,
+             c_style_factor(term->factor2));
+      terminate();
+    }
+    return true; // could use validating on both sides of operant
+  }
+  return is_fac_int(term->factor1);
+}
+
+bool is_fac_int(struct Factor *fac) {
+  switch (fac->type) {
+  case FAC_PAREN_EXP:
+    return is_exp_int(fac->exp);
+  case FAC_BOOL:
+    return false;
+  case FAC_IDENTIFIER:
+    return is_dec_int(fac->val);
+  case FAC_NUMBER:
+    return true;
+  }
+  printf("REACHED UNREACHABLE STATEMENT");
+  return false;
 }
 
 void terminate() {
-  pid_t pid = getpid();
-  kill(pid, SIGTERM);
+  printf(RED "Compilation Terminated\n" RESET);
+  exit(1);
 }
 
-void add_is_int(bool is_int) {
-  bool *new_arr = malloc(sizeof(bool) * (is_int_len + 1));
-  for (int i = 0; i < is_int_len; i++) {
-    new_arr[i] = is_int_arr[i];
-  }
-  new_arr[is_int_len] = is_int;
-  is_int_len++;
-  is_int_arr = new_arr;
-}
+/**
+ * Translation process
+ */
 
 void to_c_file(struct Program *prog) {
-  FILE *file = fopen("TL13.c", "w");
-  fprintf(file, "#include <stdbool.h>\n #include <stdio.h>\n\n\n");
   const char *decs = c_style_dec(prog->decs);
   const char *states = c_style_statement_seq(prog->state_seq);
+  FILE *file = fopen("TL13.c", "w");
+  fprintf(file, "#include <stdbool.h>\n #include <stdio.h>\n\n\n");
   fprintf(file, "int main() {\n%s\n\n%s\n\nreturn 0;\n}\n", decs, states);
   fclose(file);
   printf(GREEN "\nSuccessfully compiled into TL13.c\n" RESET);
@@ -116,8 +166,7 @@ void to_c_file(struct Program *prog) {
 const char *c_style_dec(struct Declaration *dec) {
   const char *type;
   check_duplicate_dec(dec->identifier);
-  add_dec(dec->identifier);
-  add_is_int(dec->type->is_int);
+  add_dec(dec);
   const char *default_val;
   if (dec->type->is_int) {
     type = "int";
@@ -172,10 +221,8 @@ const char *c_style_statement(struct Statement *statement) {
 const char *c_style_assignment(struct Assignment *assign) {
   validate_ident(assign->identifier);
   if (assign->expression != NULL) {
-    validate_type_of_ident(
-        assign->identifier,
-        assign->expression->simple_expression2 ==
-            NULL); // expressions always use a boolean operator if there's 2
+    validate_type_of_ident(assign->identifier, is_exp_int(assign->expression));
+
     const char *exp_str = c_style_expression(assign->expression);
     int buf_size = strlen(assign->identifier) + 1 + strlen(exp_str) + 1 + 4;
     char *ret = malloc(buf_size);
@@ -184,6 +231,7 @@ const char *c_style_assignment(struct Assignment *assign) {
 
   } else {
     validate_type_of_ident(assign->identifier, true);
+
     int buf_size =
         strlen("scanf(\"%d\"&,);") + 1 + strlen(assign->identifier) + 1 + 1;
     char *ret = malloc(buf_size);
@@ -234,9 +282,10 @@ const char *c_style_term(struct Term *term) {
 
 const char *c_style_factor(struct Factor *fac) {
   const char *ret;
+  const char *exp;
   switch (fac->type) {
   case FAC_PAREN_EXP:
-    const char *exp = c_style_expression(fac->exp);
+    exp = c_style_expression(fac->exp);
     char *ret = malloc(strlen(exp) + 3);
     snprintf(ret, strlen(exp) + 3, "(%s)", exp);
     return ret;
@@ -249,6 +298,14 @@ const char *c_style_factor(struct Factor *fac) {
 }
 
 const char *c_style_if_statement(struct IfStatement *if_state) {
+
+  if (is_exp_int(if_state->expression)) {
+    printf(RED "Mismatched types. Expected expression of type bool in if "
+               "statement, not %s\n" RESET,
+           c_style_expression(if_state->expression));
+    terminate();
+  }
+
   const char *else_clause_str =
       if_state->else_clause == NULL
           ? "\n"
@@ -274,6 +331,13 @@ const char *c_style_else_clause(struct ElseClause *else_clause) {
 }
 
 const char *c_style_while_statement(struct WhileStatement *while_state) {
+
+  if (is_exp_int(while_state->expression)) {
+    printf(RED "Mismatched types. Expected expression of type bool in while "
+               "statement, not %s\n" RESET,
+           c_style_expression(while_state->expression));
+    terminate();
+  }
   const char *state_seq_str =
       c_style_statement_seq(while_state->statement_sequence);
   const char *exp_str = c_style_expression(while_state->expression);

@@ -4,19 +4,18 @@
    var TEMP as int ;
    var BOOLEAN as bool ;
    var HELLO as int ;
-   var BOOLEAN as bool ;
 begin
 
    BIGGER := readInt ;
    SMALLER := readInt ;
    TEMP := 32 ;
-   if SMALLER > BIGGER then
+   if TEMP < BOOLEAN then
       TEMP := SMALLER ;
       SMALLER := BIGGER ;
       BIGGER := TEMP ;
    end ;
 
-   while SMALLER > 0 do
+   while 7 + 32 do
       BIGGER := BIGGER - SMALLER ;
 
       if SMALLER > BIGGER then

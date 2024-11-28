@@ -5,13 +5,15 @@
   #include <string.h>
   int yylex(void);
   void yyerror(const char*);
-
+  extern int yylineno;
+  int num_decs = 0;
 %}
 
+%locations
 %define api.value.type {union YYSTYPE}
 %define parse.error detailed
 %start prog
-%token LP RP ASSIGN SC READINT WRITEINT
+%token LP RP ASSIGN SC READINT WRITEINT NEWLINE
 %token <c_string> IDENTIFIER OP2 OP3 OP4 NUMBER BOOL
 %token IF_KEY THEN_KEY ELSE_KEY BEGIN_KEY END_KEY PROGRAM_KEY WHILE_KEY DO_KEY VAR_KEY AS_KEY INT_KEY BOOL_KEY 
 %type <declaration> dec
@@ -52,10 +54,12 @@ dec:{
    } 
    |
    VAR_KEY IDENTIFIER AS_KEY type SC dec{
+   num_decs++;
    struct Declaration* dec = malloc(sizeof(struct Declaration));
    dec->identifier = $2;
    dec->type = $4;
    dec->next_dec = $6;
+   dec->line_num = yylineno - num_decs;
    $$ = dec;
    }
    ;
@@ -235,17 +239,11 @@ factor: IDENTIFIER{
       fac->exp = $2;
       $$ = fac;
       }
-
 %%
 
-
 int main(){
-signal(SIGTERM, sigterm_handler);
 int res = yyparse();
 
-if(res == 0){ //parsing successful since else YYABORT is called, reached EOF
-  printf("Parsing Successful\n");
-}
 return(res);
 }
 

@@ -8,8 +8,7 @@ begin
 
    BIGGER := readInt ;
    SMALLER := readInt ;
-   TEMP := 32 ;
-   TEMP := 5 > 7 ;
+   TEMP := (32 < 3) ;
    if SMALLER > BIGGER then
       TEMP := SMALLER ;
       SMALLER := BIGGER ;
