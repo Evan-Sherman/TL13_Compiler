@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifndef _INCLUSIONS_
+#define _INCLUSIONS_
+
 #define RED "\033[31m"
 #define RESET "\033[0m"
 #define GREEN "\033[32m"
@@ -150,3 +154,5 @@ union YYSTYPE {
   struct Term *term;
   struct Factor *factor;
 };
+
+#endif

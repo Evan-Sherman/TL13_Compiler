@@ -11,11 +11,14 @@ errors such as duplicate declaration, no declaration, and mismatched types.
 #### ENSURE YOU HAVE `gcc`, `flex`, and `bison` INSTALLED
 
 Attatched is a script called setUp.sh. Simply run `./setUp.sh` in
-your terminal, and the `parser` executable will be created. Then run
-the `parser` executable on an input of your choice. 1 valid and
+your terminal, and the `compiler` executable will be created. Then run
+the `compiler` executable on an input of your choice. 1 valid and
 a variety of invalid input files have been provided.
 
-ex. `./parser < correct_input.txt`
+ex. `./compiler < correct_input.txt`
+
+Attached is a script called `test.sh` that can be run to immediately test
+on all given input files. Make sure that `setUp.sh` has alredy been run
 
 ### How to run in Windows based systems
 
